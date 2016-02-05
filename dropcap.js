@@ -7,7 +7,7 @@ http://www.apache.org/licenses/LICENSE-2.0.html
 "use strict";
 
 // Reference terms: http://blogs.wayne.edu/bcam/wp-content/blogs.dir/308/files/2013/09/glyphterms.gif
- 
+
 var TEST_GLYPH = "X";
 var TEST_SIZE = 100;
 var TEST_SIZE_PX = TEST_SIZE + "px";
@@ -29,13 +29,13 @@ function getLineMetrics(css) {
 
 function createTestContainingBlock(document) {
     var div = document.createElement('div');
-   
+
     div.style.position = "fixed"; // To make containing block and out of flow
     div.style.padding = ZEROPX;
     div.style.opacity = "0";      // So we don't see it; we need to be attached to the current doc to get layout info. Can't be display:none either
     div.style.fontSize = TEST_SIZE_PX;
-    div.style.lineHeight = "1"; 
-    
+    div.style.lineHeight = "1";
+
     document.body.appendChild(div);
     return div;
 }
@@ -58,16 +58,16 @@ function measureCapHeightRatio(testParent, fontFamily, width, height) {
     // This helps us figure out the factor by which to grow our drop cap's font
     // size to fill the entire drop cap float.
     //
-    // Because some browsers may not position the baseline at the same height in 
-    // canvas vs HTML we will detect both the cap line and the baseline using a 
+    // Because some browsers may not position the baseline at the same height in
+    // canvas vs HTML we will detect both the cap line and the baseline using a
     // capital 'E'
 
     var ratio = -1;
     var canvas = document.createElement('canvas');
-    canvas.width = width; 
+    canvas.width = width;
     canvas.height = height;
-    testParent.appendChild(canvas); 
-    
+    testParent.appendChild(canvas);
+
     var ctx = canvas.getContext('2d');
     ctx.font = TEST_SIZE_PX +" "+fontFamily;
     ctx.fillStyle = "#ffffff";
@@ -115,7 +115,7 @@ function getFontMetrics(document, fontFamily) {
     }
 
     ret = { baselineRatio: undefined, capHeightRatio: undefined };
-   
+
     /*
         The injected markup looks like:
 
@@ -126,14 +126,14 @@ function getFontMetrics(document, fontFamily) {
     */
 
     var testBlock = createTestContainingBlock(document);
-    testBlock.style.fontFamily = fontFamily; 
-    
+    testBlock.style.fontFamily = fontFamily;
+
     var zeroX = newTestGlyph(testBlock);
     zeroX.style.fontSize = ZEROPX;
     var largeX = newTestGlyph(testBlock);
-  
+
     ret.baselineRatio = zeroX.offsetTop/TEST_SIZE;
-    try {   
+    try {
         ret.capHeightRatio = measureCapHeightRatio(testBlock, fontFamily, largeX.offsetWidth, TEST_SIZE);
     } catch(e) {
         throw new Error('[dropcap.js] Error computing font metrics: '+ e.message);
@@ -202,29 +202,29 @@ function layoutDropcap(dropcapElement, heightInLines, baselinePos) {
         var dcapCapHeightRatio = dcapFontMetrics.capHeightRatio;
         var parLineMetrics = getLineMetrics(parCSS);
 
-        // We compute size and position for the main use-case: the drop cap 
-        // extend from the baseline of the nth line to the cap line of the 
+        // We compute size and position for the main use-case: the drop cap
+        // extend from the baseline of the nth line to the cap line of the
         // first line. Then adjust as needed if heightInLines != baslinePos
         //
         // For the height, we take the line height of all n lines then substract:
-        // 1. The half-leading for the first and nth line 
+        // 1. The half-leading for the first and nth line
         // 2. The space below the baseline of the nth line
-        // 3. The space between the ascender line and the cap line 
+        // 3. The space between the ascender line and the cap line
 
         var ascend = (parFontMetrics.baselineRatio - parFontMetrics.capHeightRatio)*parLineMetrics.fontSize;
-      
+
         var dcapHeightInPx = (heightInLines*parLineMetrics.lineHeight) - parLineMetrics.leading - ascend - ((1-parFontMetrics.baselineRatio)*parLineMetrics.fontSize);
-        var dcapFontSizeInPx = (dcapHeightInPx/dcapCapHeightRatio); 
-      
+        var dcapFontSizeInPx = (dcapHeightInPx/dcapCapHeightRatio);
+
         dcap.dcapjs = true;
         dcap.style.cssFloat = "left";
         dcap.style.padding = ZEROPX;
-        dcap.style.fontSize = toPxLength(dcapFontSizeInPx);  
+        dcap.style.fontSize = toPxLength(dcapFontSizeInPx);
         dcap.style.lineHeight = ZEROPX;
 
-        // Push the float down by the first line's half-leading + the space between 
+        // Push the float down by the first line's half-leading + the space between
         // cap line and ascender line
-        var verticalOffset = parLineMetrics.leading/2 + ascend; 
+        var verticalOffset = parLineMetrics.leading/2 + ascend;
         // If the dropcap is raised by n lines, we need to drag it up accordingly
         // (or down is it's sized down...)
         verticalOffset -= ((heightInLines - baselinePos)*parLineMetrics.lineHeight);
@@ -235,7 +235,7 @@ function layoutDropcap(dropcapElement, heightInLines, baselinePos) {
         if (heightInLines > baselinePos) {
             var parMarginTop = parseFloat(parCSS.marginTop);
             par.style.marginTop = toPxLength(parMarginTop + (-1*verticalOffset));
-        } 
+        }
 
         // Is it a descender? Make our float taller
         var descendAdjust = 0;
@@ -250,17 +250,17 @@ function layoutDropcap(dropcapElement, heightInLines, baselinePos) {
             // Note: the result may generally be too tall; experience will show
             // whether this is useful
             descendAdjust = dcapFontSizeInPx - dcapHeightInPx;
-        } 
+        }
 
         dcap.style.height = toPxLength(dcapHeightInPx + descendAdjust);
-        
-        
+
+
         // The baseline of an empty inline-block is its bottom
         // margin edge. Because the dropcap span is a float, it
-        // creates a BFC preventing such an inline-block to 'bleed' 
-        // outside its boundary like an anonymous inline glyph can. 
-        // The inline block we create below acts a strut that pulls 
-        // the baseline of the dropcap element's anymous glyph down 
+        // creates a BFC preventing such an inline-block to 'bleed'
+        // outside its boundary like an anonymous inline glyph can.
+        // The inline block we create below acts a strut that pulls
+        // the baseline of the dropcap element's anymous glyph down
         //to the bottom of the span
         var strut = dcap.dcapjsStrut;
         if (!strut) {
@@ -270,7 +270,7 @@ function layoutDropcap(dropcapElement, heightInLines, baselinePos) {
             dcap.dcapjsStrut = strut;
         }
         strut.style.height = toPxLength(dcapHeightInPx);
-        
+
 }
 
 function getCSSPropertyName(property) {
@@ -287,7 +287,7 @@ function getCSSPropertyName(property) {
     // ...then look for prefixed version...
     var prefix = ['-webkit-', '-moz-', '-ms-', '-o'];
     for (var i=0; i < prefix.length; i++) {
-        var name = prefix[i]+property; 
+        var name = prefix[i]+property;
         if (_supported(name)) {
             return name;
         }
@@ -296,8 +296,16 @@ function getCSSPropertyName(property) {
     return null;
 }
 
-window.Dropcap = {
-   
+var global;
+if (typeof window !== 'undefined') {
+  global = window;
+} else if (typeof exports !== 'undefined') {
+  global = exports;
+} else {
+  global = this;
+}
+global.Dropcap = {
+
     options: {
         runEvenIfInitialLetterExists: true,
     },
